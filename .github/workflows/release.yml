@@ -68,6 +68,25 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Add install instructions to job summary
+        if: steps.check.outputs.publish == 'true'
+        run: |
+          {
+            echo "## Release published"
+            echo ""
+            echo "Install this version:"
+            echo ""
+            echo '```bash'
+            echo "npm install @thiagopi/ts-utils-kit@${{ steps.version.outputs.version }}"
+            echo '```'
+            echo ""
+            echo "Or install the latest stable tag:"
+            echo ""
+            echo '```bash'
+            echo "npm install @thiagopi/ts-utils-kit@latest"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Create GitHub release
         if: steps.check.outputs.publish == 'true'
         uses: softprops/action-gh-release@v2
@@ -75,3 +94,17 @@ jobs:
           tag_name: ${{ steps.version.outputs.tag }}
           name: ${{ steps.version.outputs.tag }}
           generate_release_notes: true
+          body: |
+            ## Install
+
+            Install this version:
+
+            ```bash
+            npm install @thiagopi/ts-utils-kit@${{ steps.version.outputs.version }}
+            ```
+
+            Or install the latest stable tag:
+
+            ```bash
+            npm install @thiagopi/ts-utils-kit@latest
+            ```

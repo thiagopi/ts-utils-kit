@@ -1,25 +1,32 @@
 name: Release Alpha
 
 on:
-  push:
-    branches-ignore:
+  pull_request:
+    branches:
       - main
-  workflow_dispatch:
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 concurrency:
-  group: release-alpha-${{ github.ref }}
+  group: release-alpha-pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   publish-alpha:
     name: Publish alpha to npm
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -41,8 +48,7 @@ jobs:
         id: version
         run: |
           BASE_VERSION=$(node -p "require('./package.json').version")
-          BRANCH="${GITHUB_REF_NAME//\//-}"
-          ALPHA_VERSION="${BASE_VERSION}-alpha.${BRANCH}.${GITHUB_RUN_NUMBER}"
+          ALPHA_VERSION="${BASE_VERSION}-alpha.pr${{ github.event.pull_request.number }}.${GITHUB_RUN_NUMBER}"
           echo "version=${ALPHA_VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Publish alpha
@@ -51,3 +57,42 @@ jobs:
           npm publish --tag alpha --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Add install instructions to job summary
+        run: |
+          {
+            echo "## Alpha release published"
+            echo ""
+            echo "Install this PR build:"
+            echo ""
+            echo '```bash'
+            echo "npm install @thiagopi/ts-utils-kit@${{ steps.version.outputs.version }}"
+            echo '```'
+            echo ""
+            echo "Or install the latest alpha tag:"
+            echo ""
+            echo '```bash'
+            echo "npm install @thiagopi/ts-utils-kit@alpha"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment alpha install instructions on PR
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          edit-mode: replace
+          commit-sha: ${{ github.event.pull_request.head.sha }}
+          body: |
+            ## Alpha release published
+
+            Install this PR build:
+
+            ```bash
+            npm install @thiagopi/ts-utils-kit@${{ steps.version.outputs.version }}
+            ```
+
+            Or install the latest alpha tag:
+
+            ```bash
+            npm install @thiagopi/ts-utils-kit@alpha
+            ```
