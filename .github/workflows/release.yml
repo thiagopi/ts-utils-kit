@@ -1,0 +1,110 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: Publish stable release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Resolve version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if version is already published
+        id: check
+        run: |
+          if npm view "@thiagopi/ts-utils-kit@${{ steps.version.outputs.version }}" version >/dev/null 2>&1; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "Version ${{ steps.version.outputs.version }} is already on npm."
+          elif git rev-parse "${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "Tag ${{ steps.version.outputs.tag }} already exists."
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Test
+        if: steps.check.outputs.publish == 'true'
+        run: npm test
+
+      - name: Build
+        if: steps.check.outputs.publish == 'true'
+        run: npm run build
+
+      - name: Publish to npm
+        if: steps.check.outputs.publish == 'true'
+        run: npm publish --tag latest --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Add install instructions to job summary
+        if: steps.check.outputs.publish == 'true'
+        run: |
+          {
+            echo "## Release published"
+            echo ""
+            echo "Install this version:"
+            echo ""
+            echo '```bash'
+            echo "npm install @thiagopi/ts-utils-kit@${{ steps.version.outputs.version }}"
+            echo '```'
+            echo ""
+            echo "Or install the latest stable tag:"
+            echo ""
+            echo '```bash'
+            echo "npm install @thiagopi/ts-utils-kit@latest"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create GitHub release
+        if: steps.check.outputs.publish == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+          generate_release_notes: true
+          body: |
+            ## Install
+
+            Install this version:
+
+            ```bash
+            npm install @thiagopi/ts-utils-kit@${{ steps.version.outputs.version }}
+            ```
+
+            Or install the latest stable tag:
+
+            ```bash
+            npm install @thiagopi/ts-utils-kit@latest
+            ```

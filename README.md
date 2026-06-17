@@ -33,6 +33,68 @@ npm test
 npm run build
 ```
 
+## Releasing
+
+This repo uses GitHub Actions to publish to npm. Workflows live in [`.github/workflows/`](.github/workflows/).
+
+### Alpha release (pull request)
+
+Open a PR targeting `main`, then leave a comment with exactly:
+
+```
+release-alpha
+```
+
+You can also use `/release-alpha`.
+
+Only repository owners, members, and collaborators can trigger the workflow. Fork PRs are not supported.
+
+The [Release Alpha](.github/workflows/release-alpha.yml) workflow will:
+
+1. Run tests and build the package from the PR head commit
+2. Publish to npm with the `alpha` dist-tag
+3. Post install instructions on the PR and in the Actions job summary
+
+Alpha versions use the format `{package.json version}-alpha.pr{PR number}.{run number}` (for example, `1.0.0-alpha.pr42.3`).
+
+Install an alpha build:
+
+```bash
+# Specific PR alpha version (shown in the PR comment)
+npm install @thiagopi/ts-utils-kit@1.0.0-alpha.pr42.3
+
+# Latest alpha tag
+npm install @thiagopi/ts-utils-kit@alpha
+```
+
+### Stable release (`main`)
+
+When changes are merged into `main`, the [Release](.github/workflows/release.yml) workflow publishes a stable version if the version in `package.json` has not been published yet.
+
+Before merging to `main`, bump the version in `package.json` (for example, `1.0.0` → `1.1.0`).
+
+The workflow will:
+
+1. Skip publishing if the version is already on npm or the git tag already exists
+2. Run tests, build, and publish to npm with the `latest` dist-tag
+3. Create a GitHub release with install instructions
+
+Install a stable release:
+
+```bash
+# Specific version
+npm install @thiagopi/ts-utils-kit@1.1.0
+
+# Latest stable tag
+npm install @thiagopi/ts-utils-kit@latest
+```
+
+### GitHub setup
+
+1. Add an npm automation token as the repository secret `NPM_TOKEN`.
+2. In **Settings → Actions → General**, set workflow permissions to **Read and write permissions** so the alpha workflow can comment on PRs.
+3. Merge the workflow files to `main`. Comment-triggered workflows run from the default branch.
+
 ## Adding a new helper with Cursor
 
 This repo includes a Cursor skill that guides adding and exporting new utilities.
