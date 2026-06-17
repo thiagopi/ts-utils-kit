@@ -1,16 +1,12 @@
 name: Release Alpha
 
 on:
-  pull_request:
-    branches:
-      - main
+  issue_comment:
     types:
-      - opened
-      - synchronize
-      - reopened
+      - created
 
 concurrency:
-  group: release-alpha-pr-${{ github.event.pull_request.number }}
+  group: release-alpha-pr-${{ github.event.issue.number }}
   cancel-in-progress: true
 
 permissions:
@@ -20,13 +16,42 @@ permissions:
 jobs:
   publish-alpha:
     name: Publish alpha to npm
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: |
+      github.event.issue.pull_request &&
+      (
+        github.event.comment.body == 'release-alpha' ||
+        github.event.comment.body == '/release-alpha'
+      ) &&
+      (
+        github.event.comment.author_association == 'OWNER' ||
+        github.event.comment.author_association == 'MEMBER' ||
+        github.event.comment.author_association == 'COLLABORATOR'
+      )
     runs-on: ubuntu-latest
     steps:
+      - name: Get PR details
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+
+            if (pr.head.repo.full_name !== `${context.repo.owner}/${context.repo.repo}`) {
+              core.setFailed("Alpha releases from fork PRs are not supported.");
+              return;
+            }
+
+            core.setOutput("sha", pr.head.sha);
+            core.setOutput("number", String(pr.number));
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ steps.pr.outputs.sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -48,7 +73,7 @@ jobs:
         id: version
         run: |
           BASE_VERSION=$(node -p "require('./package.json').version")
-          ALPHA_VERSION="${BASE_VERSION}-alpha.pr${{ github.event.pull_request.number }}.${GITHUB_RUN_NUMBER}"
+          ALPHA_VERSION="${BASE_VERSION}-alpha.pr${{ steps.pr.outputs.number }}.${GITHUB_RUN_NUMBER}"
           echo "version=${ALPHA_VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Publish alpha
@@ -79,11 +104,13 @@ jobs:
       - name: Comment alpha install instructions on PR
         uses: peter-evans/create-or-update-comment@v4
         with:
-          issue-number: ${{ github.event.pull_request.number }}
+          issue-number: ${{ steps.pr.outputs.number }}
           edit-mode: replace
-          commit-sha: ${{ github.event.pull_request.head.sha }}
+          commit-sha: ${{ steps.pr.outputs.sha }}
           body: |
             ## Alpha release published
+
+            Triggered by `@${{ github.event.comment.user.login }}` with \`release-alpha\`.
 
             Install this PR build:
 
