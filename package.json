@@ -6,7 +6,13 @@
   "scripts": {
     "test": "TZ=UTC vitest run",
     "test:watch": "TZ=UTC vitest",
-    "test:coverage": "TZ=UTC vitest run --coverage"
+    "test:coverage": "TZ=UTC vitest run --coverage",
+    "lint:check": "biome lint ./app",
+    "lint:fix": "biome lint --write ./app",
+    "format:check": "biome format ./app",
+    "format:fix": "biome format --write ./app",
+    "check": "biome check ./app",
+    "check:fix": "biome check --write ./app"
   },
   "repository": {
     "type": "git",
@@ -23,6 +29,7 @@
   },
   "homepage": "https://github.com/thiagopi/ts-utils-kit#readme",
   "devDependencies": {
+    "biome": "^0.3.3",
     "vitest": "^4.1.9"
   }
 }
