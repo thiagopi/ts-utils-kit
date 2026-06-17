@@ -1,0 +1,28 @@
+{
+  "name": "ts-utils-kit",
+  "version": "1.0.0",
+  "description": "Utils for everybody",
+  "main": "index.ts",
+  "scripts": {
+    "test": "TZ=UTC vitest run",
+    "test:watch": "TZ=UTC vitest",
+    "test:coverage": "TZ=UTC vitest run --coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thiagopi/ts-utils-kit.git"
+  },
+  "keywords": [
+    "utils",
+    "helpers"
+  ],
+  "author": "thiagopiswile",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/thiagopi/ts-utils-kit/issues"
+  },
+  "homepage": "https://github.com/thiagopi/ts-utils-kit#readme",
+  "devDependencies": {
+    "vitest": "^4.1.9"
+  }
+}
