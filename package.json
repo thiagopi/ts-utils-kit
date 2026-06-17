@@ -1,35 +1,65 @@
 {
-  "name": "ts-utils-kit",
+  "name": "@thiagopi/ts-utils-kit",
   "version": "1.0.0",
-  "description": "Utils for everybody",
-  "main": "index.ts",
+  "description": "TypeScript utility functions",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
   "scripts": {
+    "build": "tsup",
+    "prepublishOnly": "npm run build && npm test",
     "test": "TZ=UTC vitest run",
     "test:watch": "TZ=UTC vitest",
     "test:coverage": "TZ=UTC vitest run --coverage",
-    "lint:check": "biome lint ./app",
-    "lint:fix": "biome lint --write ./app",
-    "format:check": "biome format ./app",
-    "format:fix": "biome format --write ./app",
-    "check": "biome check ./app",
-    "check:fix": "biome check --write ./app"
+    "lint:check": "biome lint ./src",
+    "lint:fix": "biome lint --write ./src",
+    "format:check": "biome format ./src",
+    "format:fix": "biome format --write ./src",
+    "check": "biome check ./src",
+    "check:fix": "biome check --write ./src"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/thiagopi/ts-utils-kit.git"
   },
   "keywords": [
+    "typescript",
     "utils",
     "helpers"
   ],
   "author": "thiagopiswile",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/thiagopi/ts-utils-kit/issues"
   },
   "homepage": "https://github.com/thiagopi/ts-utils-kit#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
-    "biome": "^0.3.3",
+    "@biomejs/biome": "^2.5.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.0",
     "vitest": "^4.1.9"
   }
 }
