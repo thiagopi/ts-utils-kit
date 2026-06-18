@@ -1,8 +1,17 @@
 # @thiagopi/ts-utils-kit
 
-TypeScript utility functions published as an NPM package.
+TypeScript utility functions published to [GitHub Packages](https://github.com/thiagopi/ts-utils-kit/packages).
 
 ## Install
+
+Add this to your `.npmrc` (a [GitHub token](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#authenticating-to-github-packages) with `read:packages` is required):
+
+```
+@thiagopi:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=YOUR_GITHUB_TOKEN
+```
+
+Then install:
 
 ```bash
 npm install @thiagopi/ts-utils-kit
@@ -35,7 +44,7 @@ npm run build
 
 ## Releasing
 
-This repo uses GitHub Actions to publish to npm. Workflows live in [`.github/workflows/`](.github/workflows/).
+This repo uses GitHub Actions to publish to GitHub Packages. Workflows live in [`.github/workflows/`](.github/workflows/).
 
 ### Alpha release (pull request)
 
@@ -52,7 +61,7 @@ Only repository owners, members, and collaborators can trigger the workflow. For
 The [Release Alpha](.github/workflows/release-alpha.yml) workflow will:
 
 1. Run tests and build the package from the PR head commit
-2. Publish to npm with the `alpha` dist-tag
+2. Publish to GitHub Packages with the `alpha` dist-tag
 3. Post install instructions on the PR and in the Actions job summary
 
 Alpha versions use the format `{package.json version}-alpha.pr{PR number}.{run number}` (for example, `1.0.0-alpha.pr42.3`).
@@ -69,31 +78,26 @@ npm install @thiagopi/ts-utils-kit@alpha
 
 ### Stable release (`main`)
 
-When changes are merged into `main`, the [Release](.github/workflows/release.yml) workflow publishes a stable version automatically.
+When changes are merged into `main`:
 
-The workflow will:
+1. [Release](.github/workflows/release.yml) resolves the next version, runs tests, and creates a GitHub release tag (`v*.*.*`)
+2. [Publish](.github/workflows/publish.yml) runs on that tag and publishes the package to GitHub Packages
 
-1. Bump the patch version when the current `package.json` version is already on npm (using the latest npm version as the baseline)
-2. Run tests, build, and publish to npm with the `latest` dist-tag
-3. Tag the merge commit and create a GitHub release
+The release workflow bumps the patch version when the current `package.json` version is already published (using the latest GitHub Packages version as the baseline).
 
-`package.json` on `main` is not updated by the release workflow so it stays compatible with branch protection. To ship a minor or major release, bump the version in a pull request before merging (for example, `1.0.0` → `1.1.0`). The workflow publishes that version as-is when it is not already on npm.
+`package.json` on `main` is not updated by CI so it stays compatible with branch protection. To ship a minor or major release, bump the version in a pull request before merging (for example, `1.0.0` → `1.1.0`).
 
 Install a stable release:
 
 ```bash
-# Specific version
 npm install @thiagopi/ts-utils-kit@1.1.0
-
-# Latest stable tag
-npm install @thiagopi/ts-utils-kit@latest
 ```
 
 ### GitHub setup
 
-1. Add an npm automation token as the repository secret `NPM_TOKEN`.
-2. In **Settings → Actions → General**, set workflow permissions to **Read and write permissions** so the alpha workflow can comment on PRs.
-3. Merge the workflow files to `main`. Comment-triggered workflows run from the default branch.
+1. In **Settings → Actions → General**, set workflow permissions to **Read and write permissions** (needed for releases, packages, and PR comments).
+2. Merge the workflow files to `main`. Comment-triggered workflows run from the default branch.
+3. No npm token is required — workflows use the built-in `GITHUB_TOKEN` with `packages: write`.
 
 ## Adding a new helper with Cursor
 

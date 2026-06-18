@@ -11,10 +11,11 @@ concurrency:
 
 permissions:
   contents: write
+  packages: read
 
 jobs:
-  publish:
-    name: Publish stable release
+  release:
+    name: Create release tag
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -27,7 +28,8 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          registry-url: https://registry.npmjs.org
+          registry-url: https://npm.pkg.github.com
+          scope: '@thiagopi'
 
       - name: Install dependencies
         run: npm ci
@@ -39,7 +41,7 @@ jobs:
 
           if npm view "@thiagopi/ts-utils-kit@${PKG_VERSION}" version >/dev/null 2>&1; then
             NPM_LATEST=$(npm view "@thiagopi/ts-utils-kit" version)
-            echo "Version ${PKG_VERSION} is already on npm. Bumping from ${NPM_LATEST}."
+            echo "Version ${PKG_VERSION} is already published. Bumping from ${NPM_LATEST}."
             npm version "${NPM_LATEST}" --no-git-tag-version --allow-same-version
             npm version patch --no-git-tag-version
           fi
@@ -57,7 +59,7 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Test
         run: npm test
@@ -65,27 +67,12 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Publish to npm
-        run: npm publish --tag latest --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Add install instructions to job summary
+      - name: Add release summary
         run: |
           {
-            echo "## Release published"
+            echo "## Release tag created"
             echo ""
-            echo "Install this version:"
-            echo ""
-            echo '```bash'
-            echo "npm install @thiagopi/ts-utils-kit@${{ steps.version.outputs.version }}"
-            echo '```'
-            echo ""
-            echo "Or install the latest stable tag:"
-            echo ""
-            echo '```bash'
-            echo "npm install @thiagopi/ts-utils-kit@latest"
-            echo '```'
+            echo "Tag \`${{ steps.version.outputs.tag }}\` will publish \`${{ steps.version.outputs.version }}\` to GitHub Packages."
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Create GitHub release
@@ -97,14 +84,15 @@ jobs:
           body: |
             ## Install
 
+            Configure your `.npmrc`:
+
+            ```
+            @thiagopi:registry=https://npm.pkg.github.com
+            //npm.pkg.github.com/:_authToken=YOUR_GITHUB_TOKEN
+            ```
+
             Install this version:
 
             ```bash
             npm install @thiagopi/ts-utils-kit@${{ steps.version.outputs.version }}
-            ```
-
-            Or install the latest stable tag:
-
-            ```bash
-            npm install @thiagopi/ts-utils-kit@latest
             ```
