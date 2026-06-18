@@ -73,11 +73,11 @@ When changes are merged into `main`, the [Release](.github/workflows/release.yml
 
 The workflow will:
 
-1. Bump the patch version in `package.json` if the current version is already on npm or tagged
+1. Bump the patch version when the current `package.json` version is already on npm (using the latest npm version as the baseline)
 2. Run tests, build, and publish to npm with the `latest` dist-tag
-3. Commit the version bump to `main`, create a git tag, and open a GitHub release
+3. Tag the merge commit and create a GitHub release
 
-To ship a minor or major release, bump the version in `package.json` before merging (for example, `1.0.0` → `1.1.0`). The workflow publishes that version as-is when it is not already on npm.
+`package.json` on `main` is not updated by the release workflow so it stays compatible with branch protection. To ship a minor or major release, bump the version in a pull request before merging (for example, `1.0.0` → `1.1.0`). The workflow publishes that version as-is when it is not already on npm.
 
 Install a stable release:
 
