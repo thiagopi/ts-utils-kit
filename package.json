@@ -54,7 +54,8 @@
   },
   "homepage": "https://github.com/thiagopi/ts-utils-kit#readme",
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://npm.pkg.github.com/"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.0",
