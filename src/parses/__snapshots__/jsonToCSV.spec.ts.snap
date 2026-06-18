@@ -1,0 +1,7 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`jsonToCSV > should convert to CSV 1`] = `
+"name,age
+"João Canabrava",25
+"Maria Antonieta",22"
+`;
