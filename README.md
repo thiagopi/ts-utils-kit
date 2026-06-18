@@ -69,15 +69,15 @@ npm install @thiagopi/ts-utils-kit@alpha
 
 ### Stable release (`main`)
 
-When changes are merged into `main`, the [Release](.github/workflows/release.yml) workflow publishes a stable version if the version in `package.json` has not been published yet.
-
-Before merging to `main`, bump the version in `package.json` (for example, `1.0.0` → `1.1.0`).
+When changes are merged into `main`, the [Release](.github/workflows/release.yml) workflow publishes a stable version automatically.
 
 The workflow will:
 
-1. Skip publishing if the version is already on npm or the git tag already exists
+1. Bump the patch version in `package.json` if the current version is already on npm or tagged
 2. Run tests, build, and publish to npm with the `latest` dist-tag
-3. Create a GitHub release with install instructions
+3. Commit the version bump to `main`, create a git tag, and open a GitHub release
+
+To ship a minor or major release, bump the version in `package.json` before merging (for example, `1.0.0` → `1.1.0`). The workflow publishes that version as-is when it is not already on npm.
 
 Install a stable release:
 
