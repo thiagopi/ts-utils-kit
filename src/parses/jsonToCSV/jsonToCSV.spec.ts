@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { jsonToCSV } from './jsonToCSV'
+import { jsonToCSV } from './'
 
 describe('jsonToCSV', () => {
   const data = [

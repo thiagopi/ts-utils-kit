@@ -14,3 +14,8 @@ export {
   maskPhoneNumber,
   removeTrailingNonNumbers,
 } from "./mask/index.js";
+
+export {
+  hexToRGB,
+  jsonToCSV,
+} from "./parses/index.js";

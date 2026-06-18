@@ -1,6 +1,5 @@
-
 import { describe, expect, it } from 'vitest'
-import { hexToRGB } from './parseColor'
+import { hexToRGB } from './'
 
 describe('hexToRGB', () => {
   it('should convert hexa color "#ffffff" to rgb color "rgb(255, 255, 255)"', () => {
