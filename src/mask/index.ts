@@ -12,7 +12,11 @@ type TOptions = {
  * @param options
  * @returns The masked string
  */
-export function mask(mask: string, str?: string, { options }: TOptions = {}): string {
+export function mask(
+  mask: string,
+  str?: string,
+  { options }: TOptions = {}
+): string {
   if (!str) return ''
   // Remove all non-numeric characters
   const clearStr = clearString(str, { options })
@@ -69,7 +73,10 @@ export function clearString(str: string, { options }: TOptions = {}) {
  * e.g.: '123.456.789-' => '123.456.789'
  * e.g.: 'ABC.456.789-' => 'ABC.456.789'
  */
-export function removeTrailingNonNumbers(str: string, { options }: TOptions = {}): string {
+export function removeTrailingNonNumbers(
+  str: string,
+  { options }: TOptions = {}
+): string {
   if (options?.isCNPJ) {
     // 1. Uses the regex `/[^a-z0-9]+$/i` to match one or more non-digit characters at the end of the string
     return str.replace(/[^a-z0-9]+$/i, '').toUpperCase()
