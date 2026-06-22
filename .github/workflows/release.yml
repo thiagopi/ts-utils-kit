@@ -11,6 +11,7 @@ concurrency:
 
 permissions:
   contents: write
+  pull-requests: read
 
 jobs:
   publish:
@@ -32,16 +33,57 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Resolve release bump from PR labels
+        id: bump
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pulls } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+            });
+
+            const mergedPr = pulls.find((pr) => pr.merged_at);
+            const labels = mergedPr?.labels?.map((label) => label.name.toLowerCase()) ?? [];
+
+            // Label names map to npm semver bumps:
+            // - minor label  -> patch bump (1.0.0 -> 1.0.1)
+            // - patch label  -> minor bump (1.0.0 -> 1.1.0)
+            // - major label  -> major bump (1.0.0 -> 2.0.0)
+            // - no label     -> same as minor label
+            let bump = "patch";
+
+            if (labels.includes("major")) {
+              bump = "major";
+            } else if (labels.includes("patch")) {
+              bump = "minor";
+            } else if (labels.includes("minor")) {
+              bump = "patch";
+            }
+
+            const bumpSource = !mergedPr
+              ? "no merged PR found (default: minor label)"
+              : labels.length === 0
+                ? `PR #${mergedPr.number} has no labels (default: minor label)`
+                : `PR #${mergedPr.number} labels: ${labels.join(", ")}`;
+
+            core.info(`Release bump: ${bump} (${bumpSource})`);
+            core.setOutput("bump", bump);
+            core.setOutput("source", bumpSource);
+
       - name: Resolve version
         id: version
         run: |
+          BUMP="${{ steps.bump.outputs.bump }}"
+
           PKG_VERSION=$(node -p "require('./package.json').version")
 
           if npm view "@thiagopi/ts-utils-kit@${PKG_VERSION}" version >/dev/null 2>&1; then
             NPM_LATEST=$(npm view "@thiagopi/ts-utils-kit" version)
-            echo "Version ${PKG_VERSION} is already on npm. Bumping from ${NPM_LATEST}."
+            echo "Version ${PKG_VERSION} is already on npm. Bumping from ${NPM_LATEST} (${BUMP})."
             npm version "${NPM_LATEST}" --no-git-tag-version --allow-same-version
-            npm version patch --no-git-tag-version
+            npm version "${BUMP}" --no-git-tag-version
           fi
 
           VERSION=$(node -p "require('./package.json').version")
@@ -74,6 +116,8 @@ jobs:
         run: |
           {
             echo "## Release published"
+            echo ""
+            echo "Version bump: \`${{ steps.bump.outputs.bump }}\` (${{ steps.bump.outputs.source }})"
             echo ""
             echo "Install this version:"
             echo ""
